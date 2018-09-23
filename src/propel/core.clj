@@ -367,12 +367,25 @@
   individuals in the population."
   [pop argmap]
   {:plushy
-   (let [prob (rand)]
-     (cond
-       (< prob 0.5) (crossover (:plushy (select-parent pop argmap))
-                               (:plushy (select-parent pop argmap)))
-       (< prob 0.75) (uniform-addition (:plushy (select-parent pop argmap)))
-       :else (uniform-deletion (:plushy (select-parent pop argmap)))))})
+   (case (:propagation argmap)
+     ;;
+     :mutate-or-crossover-selected
+     (let [prob (rand)]
+       (cond
+         (< prob 0.5) (crossover (:plushy (select-parent pop argmap))
+                                 (:plushy (select-parent pop argmap)))
+         (< prob 0.75) (uniform-addition (:plushy (select-parent pop argmap)))
+         :else (uniform-deletion (:plushy (select-parent pop argmap)))))
+     ;;
+     :select-for-each-gene
+     (loop [plushy []
+            index 0
+            parent (select-parent pop argmap)]
+       (if (>= (count (:plushy parent)) (inc index))
+         (recur (conj plushy (nth (:plushy parent) index))
+                (inc index)
+                (select-parent pop argmap))
+         (uniform-deletion (uniform-addition plushy)))))})
 
 (defn report
   "Reports information each generation."
@@ -494,7 +507,8 @@
                                   :max-initial-plushy-size 50
                                   :step-limit 100
                                   :parent-selection :tournament
-                                  :tournament-size 5}
+                                  :tournament-size 5
+                                  :propagation :mutate-or-crossover-selected}
                                  (apply hash-map
                                         (map read-string args)))
                           [:error-function]
