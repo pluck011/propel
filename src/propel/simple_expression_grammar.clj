@@ -27,10 +27,13 @@
   (fn [state]
     (u/make-push-instruction state (partial list func) [:expr :expr] :expr)))
 
-(defn S->Plus (make-binary-expr-instruction '+))
-(defn S->Minus (make-binary-expr-instruction '-))
-(defn S->Times (make-binary-expr-instruction '*))
-(defn S->Divide (make-binary-expr-instruction '/))
+(defn protected-division [x y]
+  (if (zero? y) 1 (quot x y)))
+
+(def S->Plus (make-binary-expr-instruction '+'))
+(def S->Minus (make-binary-expr-instruction '-'))
+(def S->Times (make-binary-expr-instruction '*'))
+(def S->Divide (make-binary-expr-instruction 'protected-division))
 
 (defn Num->0
   [state]
