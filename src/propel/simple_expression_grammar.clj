@@ -42,3 +42,31 @@
 (defn Num->1
   [state]
   (u/make-push-instruction state (constantly 1) [] :num-expr))
+
+(defmacro body->function [body]
+  (list 'fn '[x] body))
+
+(defn regression-error-function
+  "Finds the behaviors and errors of the individual using a grammar."
+  [target-function argmap individual]
+  (let [grammar-productions (u/push-from-plushy (:plushy individual))
+        program (u/peek-stack
+                  (u/interpret-program
+                    grammar-productions
+                    u/empty-push-state
+                    (:step-limit argmap))
+                  :expr)
+        func (body->function program)
+        inputs (range -10 11)
+        target-outputs (map target-function inputs)
+        actual-outputs (map func inputs)
+        errors (map (fn [target-output actual-output]
+                      (if (= actual-output :no-stack-item)
+                        1000000
+                        (u/abs (- target-output actual-output))))
+                    target-outputs
+                    actual-outputs)]
+    (assoc individual
+           :behaviors actual-outputs
+           :errors errors
+           :total-error (apply +' errors))))
