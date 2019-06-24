@@ -96,7 +96,7 @@
   "Absolute value."
   [x]
   (if (neg? x)
-    (- x)
+    (-' x)
     x))
 
 (defn interpret-one-step

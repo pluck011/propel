@@ -75,7 +75,7 @@
         errors (map (fn [target-output actual-output]
                       (if (= actual-output :no-stack-item)
                         1000000
-                        (u/abs (- target-output actual-output))))
+                        (u/abs (-' target-output actual-output))))
                     target-outputs
                     actual-outputs)]
     (assoc individual
