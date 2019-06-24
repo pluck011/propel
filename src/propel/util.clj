@@ -135,3 +135,9 @@
             (> (:step state) step-limit))
       state
       (recur (update (interpret-one-step state) :step inc)))))
+
+(defn to-infix
+  [expr]
+  (if (seq? expr)
+    (str "(" (to-infix (second expr)) (first expr) (to-infix (second (rest expr))) ")")
+    expr))
