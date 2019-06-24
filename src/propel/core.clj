@@ -1,5 +1,6 @@
 (ns propel.core
-  (:require [propel.util :as u])
+  (:require [propel.util :as u]
+            [propel.simple-expression-grammar :as g])
   (:gen-class))
 
 (def example-push-state
@@ -43,6 +44,18 @@
    "C"
    "G"
    "T"))
+
+(def expr-grammar-instructions
+   [
+     'exec_dup
+     'g/S->Num
+     'g/S->x
+     'g/S->Plus
+     'g/S->Minus
+     'g/S->Times
+     'g/S->Divide
+     'g/Num->0
+     'g/Num->1])
 
 ;;;;;;;;;
 ;; Utilities
@@ -353,7 +366,7 @@
   "Runs propel-gp, giving it a map of arguments."
   [& args]
   (binding [*ns* (the-ns 'propel.core)]
-    (propel-gp (update-in (merge {:instructions default-instructions
+    (propel-gp (update-in (merge {:instructions expr-grammar-instructions; default-instructions
                                   :error-function regression-error-function
                                   :max-generations 500
                                   :population-size 200
