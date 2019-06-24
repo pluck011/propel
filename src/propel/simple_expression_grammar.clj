@@ -149,3 +149,39 @@
 
 ; So we ended up with two instances of 2x and four instances of x-2; this
 ; all includes two instances of 2x+x-2.
+
+;;;;;;;;;;;;;;;
+
+; Some other runs on the hard problem, using lexicase selection and
+; step-limit of 1000.
+
+; Success in generation 126
+; (g/S->Minus g/S->x g/S->Times g/Num->1 g/S->Plus g/S->x g/S->x g/S->x g/S->x g/S->Plus g/S->x exec_dup (g/Num->0 g/S->x g/S->Minus g/S->Num g/Num->0 g/S->x g/S->Times g/S->Num exec_dup (exec_dup (g/S->Plus exec_dup (g/S->x g/S->Num g/S->Minus g/S->Minus g/S->Times g/S->Divide g/S->Minus exec_dup (g/S->Minus g/S->Minus g/S->Divide exec_dup (exec_dup (g/Num->1))))))))
+
+; Success in generation 241
+; (g/S->Times g/S->Times g/S->x g/S->Divide g/S->Minus g/S->Times g/S->x g/S->x g/S->Times g/S->Divide g/S->Divide g/Num->1 g/Num->1 g/S->Minus g/S->Divide g/S->Plus g/S->Num g/S->x g/S->Plus g/S->Plus g/S->Plus g/S->Plus g/S->Plus g/S->Plus g/S->Times g/S->Times g/S->Num g/S->Num g/S->Divide g/S->x g/S->Num g/S->x g/S->Num g/S->Times g/Num->1 g/S->Minus g/S->Num g/Num->1 g/S->x g/Num->1 g/Num->1 g/S->Divide g/S->Num g/S->Num g/S->Minus g/S->Plus g/S->Minus g/S->Times g/S->x g/S->Minus g/S->Divide g/S->Num g/S->Num g/Num->1 g/S->Num g/S->Num exec_dup (exec_dup (g/S->Divide g/Num->1 g/Num->1 g/Num->0 g/S->Times g/S->Num g/S->Minus g/S->x g/Num->1 exec_dup (g/S->Minus g/S->Times g/S->x g/S->x g/S->Times g/S->Plus g/S->Plus g/S->x g/S->Minus g/S->x g/S->Minus g/S->Minus exec_dup (g/S->Num exec_dup (g/S->Plus))))))
+
+; Success in generation 61
+; (g/S->Divide g/S->x g/Num->0 g/Num->1 g/S->Plus g/S->Plus exec_dup (exec_dup (g/S->Divide g/S->Minus exec_dup (g/S->x g/S->Minus g/S->x g/S->x g/S->Times exec_dup (g/Num->0 g/S->Num g/S->Plus g/S->Plus g/Num->1 g/S->x g/S->Minus g/S->Minus g/S->Plus g/S->Plus g/S->Minus g/S->Minus g/S->Minus g/Num->0 g/S->Divide exec_dup (exec_dup (exec_dup (g/S->Num g/S->Num g/S->Minus g/S->Minus))))))))
+
+; Success in generation 59
+; (g/Num->1 g/Num->1 exec_dup (g/Num->1 g/Num->1 g/S->Divide g/S->Divide exec_dup (exec_dup (g/S->x g/S->x g/S->Times g/S->x g/Num->1 g/Num->0 g/S->Plus g/S->Plus exec_dup (g/S->Divide g/S->Plus g/S->Plus exec_dup (g/S->Divide g/S->Divide g/S->Divide g/S->x g/S->Minus g/S->Minus g/S->Minus g/S->Minus g/S->Minus exec_dup (g/S->Minus g/S->Plus exec_dup (g/S->Num g/S->Plus))))))))
+
+; Two or three failures in a throw
+
+; Success in generation 196
+;  (g/S->x g/S->Plus g/Num->1 g/S->Num g/S->Plus g/Num->0 g/S->Minus g/S->Minus g/S->Times g/S->Num g/S->x g/Num->1 g/Num->1 g/S->Num exec_dup (g/S->Minus g/S->Minus g/S->Times g/S->Times g/S->Divide g/S->Divide g/S->Times exec_dup (g/S->x g/Num->1 g/S->Num exec_dup (g/S->Plus g/Num->1 g/S->Num g/S->Plus g/S->x g/S->x g/S->x g/S->Times g/S->Minus g/S->Minus exec_dup (g/S->Plus g/S->Minus g/S->x g/S->Minus g/Num->0 g/Num->0 g/Num->1 g/Num->1)))))
+
+;;;;;;;;;;;;;;;
+
+; I think all the following are with the easy target.
+
+; A quick solution evolved later in 67 generations with pop size 200,
+; :step-size 1000, and tournament selection:
+; (g/S->Divide g/S->Minus g/S->Times exec_dup (g/S->x g/S->Minus g/S->Divide g/S->Divide g/S->x g/S->Times g/S->x g/S->Plus g/S->Num g/S->Num g/S->Num exec_dup (exec_dup (g/S->Plus g/Num->1 exec_dup (exec_dup ())))))
+
+; Another quick soution, 32 generations same setup:
+; (g/Num->1 g/S->Num g/S->Num g/S->Num g/Num->1 g/Num->1 g/S->Plus g/S->Num g/S->Num g/S->x g/S->x g/S->x g/S->Times g/S->Times g/S->x exec_dup (g/S->Plus g/S->Plus g/S->Plus))
+
+; Super fast, 7 generations:
+; (g/Num->1 g/S->Plus g/S->Minus g/Num->1 g/S->Minus g/S->Plus g/S->x exec_dup (g/S->Minus g/S->Plus g/S->x g/S->Times g/S->Times g/S->Times g/Num->0 g/S->Plus g/S->Times g/S->Divide g/Num->1 g/S->Num g/Num->0 g/S->Times g/S->Times g/S->Plus g/S->Times g/Num->1 g/S->Num exec_dup (exec_dup (g/S->Minus g/S->Num g/S->Minus g/Num->1 g/S->Plus g/S->Times g/S->Times g/S->Plus g/S->Num exec_dup (g/S->Plus g/S->Plus g/S->Minus)))))
