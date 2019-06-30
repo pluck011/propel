@@ -595,13 +595,12 @@
   [& args]
   (binding [*ns* (the-ns 'propel.core)]
     (propel-gp! (update-in (merge {:instructions default-instructions
+                                  :training-function cubic-function
                                   :error-function regression-error-function
-                                  :max-generations 500
                                   :population-size 200
                                   :max-initial-plushy-size 50
                                   :step-limit 100
                                   :parent-selection :tournament
-                                  :training-function cubic-function
                                   :misbehavior-penalty 1000000
                                   :tournament-size 5}
                                  (apply hash-map
