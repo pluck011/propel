@@ -416,33 +416,49 @@
     ))
 
 
+(def population-atom (atom [])) ;; stores population between steps
 (def external-control (atom true)) ;; intended to be overridden externally
 
-(defn propel-gp
-  "Main GP loop."
+(defn propel-setup!
+  "Build an initial population using the specified arguments, placing it in the specified atom"
+  [pop-atom popsize instructions max-size]
+    (reset! pop-atom
+      (random-population popsize instructions max-size)
+      ))
+
+(defn propel-population-step
+  "Takes an existing population and a pile of arguments, and produces a next population of the same size, according to the specified parameters."
+  [population argmap]
+  (let
+    [errfxn (:error-function argmap)
+     instructions (:instructions argmap)
+     evaluated-pop
+          (score-sorted-population population errfxn argmap)]
+    (repeatedly
+      (count population)
+      #(new-individual evaluated-pop argmap)
+      )))
+
+(defn propel-gp!
+  "Main GP loop, rewritten to use a population atom and a doseq."
   [{:keys [population-size max-generations error-function instructions
            max-initial-plushy-size]
     :as argmap}]
 
   (report-starting-line argmap)
-  (loop [generation 0
-         population (random-population
-                      population-size
-                      instructions
-                      max-initial-plushy-size)]
+  (propel-setup! population-atom
+                 population-size
+                 instructions
+                 max-initial-plushy-size)
+  (doseq [gen (range 0 10)]
     (let [evaluated-pop
-           (score-sorted-population population error-function argmap)]
-      (report-generation evaluated-pop generation)
-      (cond
-        (zero? (:total-error (first evaluated-pop))) (println "SUCCESS")
-        (not @external-control) (println "PAUSED")
-            ;; use this atom to pause/halt looping
-        (>= generation max-generations) nil
-        :else (recur (inc generation)
-                     (repeatedly
-                        population-size
-                        #(new-individual evaluated-pop argmap)
-                        ))))))
+           (score-sorted-population @population-atom error-function argmap)]
+      (report-generation evaluated-pop gen)
+
+      (reset! population-atom
+        (repeatedly population-size
+                    #(new-individual evaluated-pop argmap)
+                    )))))
 
 ;;;;;;;;;
 ;; Problem: f(x) = 7x^2 - 20x + 13
@@ -461,11 +477,13 @@
      x
      3))
 
+
+
 (defn regression-error-function
   "Finds the behaviors and errors of the individual."
   [argmap individual]
   (let [program (push-from-plushy (:plushy individual))
-        inputs (range -10 11)
+        inputs (range -11 10)
         correct-outputs (map target-function inputs)
         outputs (map (fn [input]
                        (peek-stack
@@ -520,7 +538,7 @@
   "Runs propel-gp, giving it a map of arguments."
   [& args]
   (binding [*ns* (the-ns 'propel.core)]
-    (propel-gp (update-in (merge {:instructions default-instructions
+    (propel-gp! (update-in (merge {:instructions default-instructions
                                   :error-function regression-error-function
                                   :max-generations 500
                                   :population-size 200
