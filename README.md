@@ -6,6 +6,12 @@ Bill Tozier's fork of Lee Spector's Plushy fork of Tom Helmuth's little PushGP i
 
 This fork (Bill's) exists because he's prepping it to be embedded in a ClojureScript web app for demonstration and tutorial purposes.
 
+Aside from various refactoring moves and clarifications, an important change is the move to a Clojure `atom` for storing the state of the population of evolving solutions, and the removal of most "automatic" search functions. While there's still a command-line option to run the program for pedagogical reasons, the invoked function now (1) runs for exactly 100 generations, and (2) does not stop when a good solution is discovered.
+
+The intended use case is to add the `propel.clj` file (once it's been fixed for ClojureScript) into a project, build and populate the requisite atoms with `propel-setup!`, and launch a separate process which invokes `propel-population-step` to build a "next" population one generation at a time, and then manually `reset!` the exposed `atom`.
+
+Note: neither of those two functions actually produces visible output, by design.
+
 ## Usage
 
 To run PushGP on the default genetic programming problem from a REPL, load propel.core into your REPL (i.e. `lein repl`), and run `(-main)`. However this is kinda boring.
