@@ -34,6 +34,8 @@
    'close
    0
    1
+   4
+   16
    true
    false
    ""
@@ -375,7 +377,7 @@
                                        (:instructions argmap))
        :else (uniform-deletion (:plushy (select-parent pop argmap)))))})
 
-(defn report
+(defn report-generation
   "Reports information each generation."
   [pop generation]
   (let [best (first pop)]
@@ -389,28 +391,58 @@
     (println "Best behaviors:" (:behaviors best))
     (println)))
 
+
+(defn report-starting-line
+  [args] (println "Starting GP with args:" args))
+
+
+(defn random-individual
+  [instructions max-size]
+  (hash-map :plushy
+    (make-random-plushy instructions max-size)
+    ))
+
+
+(defn random-population
+  [popsize instructions max-size]
+  (repeatedly popsize #(random-individual instructions max-size)))
+
+
+(defn score-sorted-population
+  [population error-fxn args]
+  (sort-by
+    :total-error
+    (map (partial error-fxn args) population)
+    ))
+
+
+(def external-control (atom true)) ;; intended to be overridden externally
+
 (defn propel-gp
   "Main GP loop."
   [{:keys [population-size max-generations error-function instructions
            max-initial-plushy-size]
     :as argmap}]
-  (println "Starting GP with args:" argmap)
+
+  (report-starting-line argmap)
   (loop [generation 0
-         population (repeatedly
-                     population-size
-                     #(hash-map :plushy
-                                (make-random-plushy instructions
-                                                    max-initial-plushy-size)))]
-    (let [evaluated-pop (sort-by :total-error
-                                 (map (partial error-function argmap)
-                                      population))]
-      (report evaluated-pop generation)
+         population (random-population
+                      population-size
+                      instructions
+                      max-initial-plushy-size)]
+    (let [evaluated-pop
+           (score-sorted-population population error-function argmap)]
+      (report-generation evaluated-pop generation)
       (cond
         (zero? (:total-error (first evaluated-pop))) (println "SUCCESS")
+        (not @external-control) (println "PAUSED")
+            ;; use this atom to pause/halt looping
         (>= generation max-generations) nil
         :else (recur (inc generation)
-                     (repeatedly population-size 
-                                 #(new-individual evaluated-pop argmap)))))))
+                     (repeatedly
+                        population-size
+                        #(new-individual evaluated-pop argmap)
+                        ))))))
 
 ;;;;;;;;;
 ;; Problem: f(x) = 7x^2 - 20x + 13
@@ -500,4 +532,3 @@
                                         (map read-string args)))
                           [:error-function]
                           #(if (fn? %) % (eval %))))))
-
