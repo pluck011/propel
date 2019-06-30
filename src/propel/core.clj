@@ -34,8 +34,8 @@
    'close
    0
    1
-   4
-   16
+   10
+   100
    true
    false
    ""
@@ -318,11 +318,16 @@
     (if (or (empty? cases)
             (empty? (rest survivors)))
       (rand-nth survivors)
-      (let [min-err-for-case (apply min (map #(nth % (first cases))
-                                             (map :errors survivors)))]
-        (recur (filter #(= (nth (:errors %) (first cases)) min-err-for-case)
-                       survivors)
-               (rest cases))))))
+      (let
+        [min-err-for-case
+          (apply min
+            (map #(nth % (first cases)) (map :errors survivors)))]
+        (recur
+          (filter
+            #(= (nth (:errors %) (first cases)) min-err-for-case)
+            survivors)
+            (rest cases)
+            )))))
 
 (defn select-parent
   "Selects a parent from the population using the specified method."
@@ -450,7 +455,7 @@
                  population-size
                  instructions
                  max-initial-plushy-size)
-  (doseq [gen (range 0 10)]
+  (doseq [gen (range 0 100)]
     (let [evaluated-pop
            (score-sorted-population @population-atom error-function argmap)]
       (report-generation evaluated-pop gen)
@@ -460,79 +465,130 @@
                     #(new-individual evaluated-pop argmap)
                     )))))
 
-;;;;;;;;;
-;; Problem: f(x) = 7x^2 - 20x + 13
-
-(defn target-function-hard
-  "Target function: f(x) = 7x^2 - 20x + 13"
-  [x]
-  (+ (* 7 x x)
-     (* -20 x)
-     13))
-
-(defn target-function
-  "Target function: f(x) = x^3 + x + 3"
-  [x]
-  (+ (* x x x)
-     x
-     3))
+(defn run-once
+  [program initial-state step-limit]
+  (interpret-program program initial-state step-limit))
 
 
+(defn program-behavior
+  [program in-value behavior-stack step-limit]
+  (peek-stack
+    (run-once program
+              (assoc empty-push-state :input {:in1 in-value})
+              step-limit)
+    behavior-stack
+    ))
+
+(defn behavior-vector
+  "Produces an ordered collection of behavior values taken from the specified stack top, using the specified inputs"
+  [program fxn limit]
+  (let [inputs (:args fxn)
+        behavior-stack (:behavior fxn)]
+    (map
+      (fn [i] (program-behavior program i behavior-stack limit))
+      inputs
+      )))
+
+(defn absolute-errors
+  [expected observed penalty]
+  (map
+    (fn [v1 v2]
+      (if (= :no-stack-item v2)
+        penalty
+        (abs (- v1 v2))
+        ))
+    expected
+    observed
+    ))
 
 (defn regression-error-function
-  "Finds the behaviors and errors of the individual."
+  "better docstring here"
   [argmap individual]
   (let [program (push-from-plushy (:plushy individual))
-        inputs (range -11 10)
-        correct-outputs (map target-function inputs)
-        outputs (map (fn [input]
-                       (peek-stack
-                        (interpret-program
-                         program
-                         (assoc empty-push-state :input {:in1 input})
-                         (:step-limit argmap))
-                        :integer))
-                     inputs)
-        errors (map (fn [correct-output output]
-                      (if (= output :no-stack-item)
-                        1000000
-                        (abs (- correct-output output))))
-                    correct-outputs
-                    outputs)]
+        fxn (:training-function argmap)
+        limit (:step-limit argmap)
+        penalty (:misbehavior-penalty argmap)
+        outputs (behavior-vector program fxn limit)
+        desired (map (:fxn fxn) (:args fxn))
+        errors (absolute-errors desired outputs penalty)]
     (assoc individual
            :behaviors outputs
            :errors errors
-           :total-error (apply +' errors))))
+           :total-error (apply +' errors))
+           ))
 
-;;;;;;;;;
-;; String classification
+(defn classification-errors
+  [expected observed penalty]
+  (map
+    (fn [v1 v2]
+      (if (= :no-stack-item v2)
+        penalty
+        (if (= v1 v2) 0 1)
+        ))
+    expected
+    observed
+    ))
 
-(defn string-classification-error-function
-  "Finds the behaviors and errors of the individual."
+(defn binary-classification-error-function
+  "BETTER DOCSTRING SOON"
   [argmap individual]
   (let [program (push-from-plushy (:plushy individual))
-        inputs ["GCG" "GACAG" "AGAAG" "CCCA" "GATTACA" "TAGG" "GACT"]
-        correct-outputs [false false false false true true true]
-        outputs (map (fn [input]
-                       (peek-stack
-                        (interpret-program
-                         program
-                         (assoc empty-push-state :input {:in1 input})
-                         (:step-limit argmap))
-                        :boolean))
-                     inputs)
-        errors (map (fn [correct-output output]
-                      (if (= output :no-stack-item)
-                        1000000
-                        (if (= correct-output output)
-                          0
-                          1)))
-                    correct-outputs
-                    outputs)]
+        fxn (:training-function argmap)
+        limit (:step-limit argmap)
+        penalty (:misbehavior-penalty argmap)
+        outputs (behavior-vector program fxn limit)
+        desired (map (:fxn fxn) (:args fxn))
+        errors (classification-errors desired outputs penalty)]
     (assoc individual
            :behaviors outputs
            :errors errors
-           :total-error (apply +' errors))))
+           :total-error (apply +' errors))
+           ))
+
+;; example problems
+
+;; some symbolic regression problems
+
+(def quadratic-function
+  "Target function: f(x) = 7x^2 - 20x + 13, over the range [-10,11), with the result on :integer"
+  {:fxn (fn [x] (+ (* 7 x x) (* -20 x) 13))
+   :args (range -10 11)
+   :behavior :integer}
+   )
+
+
+(def cubic-function
+  "Target function: f(x) = x^3 + x + 3, over the range [-10,11), with the result on :integer"
+  {:fxn (fn [x] (+ (* x x x) x 3))
+   :args (range -10 11)
+   :behavior :integer
+   })
+
+
+(def birthday-quadratic
+  "Target function: f(x) = 1964 - 11*x + 9x^2, over the range [0,13), with the result on :integer"
+  {:fxn (fn [x] (+ (* 9 x x) (* -11 x) 1964))
+   :args (range 0 13)
+   :behavior :integer
+   })
+
+;; string classification problems
+
+(def contains-T?-function
+  "Return true if the string contains at least one 'T' character"
+  {:fxn (fn [s] (boolean (re-find #"T" s)))
+   :args ["GCG" "GACAG" "AGAAG" "CCCA" "GATTACA" "TAGG" "GACT"]
+   :behavior :boolean
+   })
+
+
+(def contains-TA?-function
+  "Return true if the string contains substring 'TA'"
+  {:fxn (fn [s] (boolean (re-find #"TA" s)))
+   :args ["GCG" "GACAG" "AGAAG" "CCCA" "GATTACA" "TAGG" "GACT" "GACTA" "GATAC" "TA" "AT" "CG" "GCT" "GCA" "ATT"]
+   :behavior :boolean
+   })
+
 
 (defn -main
   "Runs propel-gp, giving it a map of arguments."
@@ -545,6 +601,8 @@
                                   :max-initial-plushy-size 50
                                   :step-limit 100
                                   :parent-selection :tournament
+                                  :training-function cubic-function
+                                  :misbehavior-penalty 1000000
                                   :tournament-size 5}
                                  (apply hash-map
                                         (map read-string args)))
