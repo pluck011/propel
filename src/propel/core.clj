@@ -1,11 +1,28 @@
-(ns propel.core
-  (:gen-class))
+(ns propel.core)
 
-(def example-push-state
-  {:exec '()
-   :integer '(1 2 3 4 5 6 7)
-   :string '("abc")
-   :input {:in1 4}})
+
+;; TO DO
+;; - :instructions argument broken for CLI, works for function calls
+;; - bring tournament-size into specification of tournament selection directly (like :parent-selection (tournament 5))
+
+
+
+;; CLI defaults:
+;; - :instructions default-instructions
+;;   - [specified collection of symbols]
+;; - :target-problem :simple-cubic
+;;   - :simple-quadratic
+;;   - :birthday-quadratic
+;;   - :contains-T?
+;;   - :contains-TA?
+;; :population-size 200
+;; :max-initial-plushy-size 50
+;; :step-limit 100
+;; :parent-selection :tournament
+;;   - :lexicase
+;; :misbehavior-penalty 1000000
+;; :tournament-size 5
+
 
 ; Instructions must all be either functions that take one Push state and return another
 ; or constant literals.
@@ -395,6 +412,7 @@
 
 
 (defn random-individual
+  "Produce one random individual"
   [instructions max-size]
   (hash-map :plushy
     (make-random-plushy instructions max-size)
@@ -402,17 +420,20 @@
 
 
 (defn random-population
+  "Produce a random population of the given size"
   [popsize instructions max-size]
   (repeatedly popsize #(random-individual instructions max-size)))
 
 
 (defn score-sorted-population
+  "Given a population and an error function, score the individuals (writing their scores and behaviors to them in the process) and sort by total-error"
   [population error-fxn args]
   (sort-by
     :total-error
     (map (partial error-fxn args) population)
     ))
 
+;;;;;;;;;;;;;;;;
 
 (def population-atom (atom [])) ;; stores population between steps
 (def external-control (atom true)) ;; intended to be overridden externally
@@ -428,7 +449,8 @@
   "Takes an existing population and a pile of arguments, and produces a next population of the same size, according to the specified parameters."
   [population argmap]
   (let
-    [errfxn (:error-function argmap)
+    [fxn (:fxn (:training-function argmap))
+     errfxn (:error-function fxn)
      instructions (:instructions argmap)
      evaluated-pop
           (score-sorted-population population errfxn argmap)]
@@ -458,12 +480,16 @@
                     #(new-individual evaluated-pop argmap)
                     )))))
 
+;;;;;;;;;;;;;;;;;;
+
 (defn run-once
+  "Run the program with the given initial state, until the step limit is reached."
   [program initial-state step-limit]
   (interpret-program program initial-state step-limit))
 
 
 (defn program-behavior
+  "Run the program with the specified input value (only one allowed), and return the item present at the top of the specified stack when done (or :no-stack-item if nothing is present there)."
   [program in-value behavior-stack step-limit]
   (peek-stack
     (run-once program
@@ -483,6 +509,7 @@
       )))
 
 (defn absolute-errors
+  "Produces elementwise absolute difference between two numerical vectors (of the same length), or the penalty if no value is returned in the second."
   [expected observed penalty]
   (map
     (fn [v1 v2]
@@ -495,7 +522,7 @@
     ))
 
 (defn regression-error-function
-  "better docstring here"
+  "Runs the individual's program over the input values specified by the problem, comparing the resulting behaviors (also specified in the :training-function) to the goals, and saving the behavior and error vectors, plus :total-error, in the individual. Returns an updated individual."
   [argmap individual]
   (let [program (push-from-plushy (:plushy individual))
         fxn (:training-function argmap)
@@ -511,6 +538,7 @@
            ))
 
 (defn classification-errors
+  "Produces 0 for each matching value, 1 for each mismatch, or the penalty if no value is returned at all. Basically Hamming Distance with a penalty for missing elements."
   [expected observed penalty]
   (map
     (fn [v1 v2]
@@ -523,7 +551,7 @@
     ))
 
 (defn binary-classification-error-function
-  "BETTER DOCSTRING SOON"
+  "Runs the individual's program over the input values specified by the problem, comparing the resulting behaviors (also specified in the :training-function) to the goals, and saving the behavior and error vectors, plus :total-error, in the individual. Returns an updated individual."
   [argmap individual]
   (let [program (push-from-plushy (:plushy individual))
         fxn (:training-function argmap)
@@ -539,64 +567,95 @@
            ))
 
 ;; example problems
-
 ;; some symbolic regression problems
 
-(def quadratic-function
+(def simple-quadratic-demo
   "Target function: f(x) = 7x^2 - 20x + 13, over the range [-10,11), with the result on :integer"
   {:fxn (fn [x] (+ (* 7 x x) (* -20 x) 13))
    :args (range -10 11)
-   :behavior :integer}
-   )
+   :behavior :integer
+   :error-function regression-error-function
+   })
 
 
-(def cubic-function
+(def simple-cubic-demo
   "Target function: f(x) = x^3 + x + 3, over the range [-10,11), with the result on :integer"
   {:fxn (fn [x] (+ (* x x x) x 3))
    :args (range -10 11)
    :behavior :integer
+   :error-function regression-error-function
    })
 
 
-(def birthday-quadratic
+(def birthday-quadratic-demo
   "Target function: f(x) = 1964 - 11*x + 9x^2, over the range [0,13), with the result on :integer"
   {:fxn (fn [x] (+ (* 9 x x) (* -11 x) 1964))
    :args (range 0 13)
    :behavior :integer
+   :error-function regression-error-function
    })
 
 ;; string classification problems
 
-(def contains-T?-function
-  "Return true if the string contains at least one 'T' character"
+(def contains-T?-demo
+  "Return true if the string contains at least one 'T' character, over the specified collection of inputs, with the result on :boolean"
   {:fxn (fn [s] (boolean (re-find #"T" s)))
    :args ["GCG" "GACAG" "AGAAG" "CCCA" "GATTACA" "TAGG" "GACT"]
    :behavior :boolean
+   :error-function binary-classification-error-function
    })
 
 
-(def contains-TA?-function
-  "Return true if the string contains substring 'TA'"
+(def contains-TA?-demo
+  "Return true if the string contains substring 'TA', over the specified collection of inputs, with the result on :boolean"
   {:fxn (fn [s] (boolean (re-find #"TA" s)))
    :args ["GCG" "GACAG" "AGAAG" "CCCA" "GATTACA" "TAGG" "GACT" "GACTA" "GATAC" "TA" "AT" "CG" "GCT" "GCA" "ATT"]
    :behavior :boolean
+   :error-function binary-classification-error-function
    })
 
 
+(def demo-problems
+  "Convenience to enable CLI specification of problem by keyword rather than symbol name"
+  {:simple-cubic simple-cubic-demo
+   :simple-quadratic simple-quadratic-demo
+   :birthday-quadratic birthday-quadratic-demo
+   :contains-T? contains-T?-demo
+   :contains-TA? contains-TA?-demo
+   })
+
+;;;;;;;;;;;;;;;;;;
+
+(def default-args
+  "Default argument hash, merged in 'all-the-required-args with those provided by the calling function."
+   {:instructions default-instructions
+    :target-problem :simple-cubic
+    :population-size 200
+    :max-initial-plushy-size 50
+    :step-limit 100
+    :parent-selection :tournament
+    :misbehavior-penalty 1000000
+    :tournament-size 5
+    })
+
+
+(defn all-the-required-args
+  "Omnibus function to handle all the arguments in play: The CLI arguments are parsed, then merged with the default arguments. Then the dependent args (problem symbol and error measure, given the target problem specified) are calculated and merged into the resulting hash."
+  [user-defined-argmap]
+  (let [merged (->> user-defined-argmap
+               (map read-string ,)
+               (apply hash-map ,)
+               (merge default-args ,))
+        demo (get demo-problems (:target-problem merged) :UNKNOWN-PROBLEM)]
+    (-> merged
+       (assoc , :training-function demo)
+       (assoc , :error-function (:error-function demo))
+       )))
+
+;;;;;;;;;;;;;;
+
 (defn -main
-  "Runs propel-gp, giving it a map of arguments."
-  [& args]
+  "Runs propel-gp! from command line, giving it a map of arguments. Use function calls to 'propel-setup! and 'propel-population-step to walk through search using an external caller."
+  [& cli-args]
   (binding [*ns* (the-ns 'propel.core)]
-    (propel-gp! (update-in (merge {:instructions default-instructions
-                                  :training-function cubic-function
-                                  :error-function regression-error-function
-                                  :population-size 200
-                                  :max-initial-plushy-size 50
-                                  :step-limit 100
-                                  :parent-selection :tournament
-                                  :misbehavior-penalty 1000000
-                                  :tournament-size 5}
-                                 (apply hash-map
-                                        (map read-string args)))
-                          [:error-function]
-                          #(if (fn? %) % (eval %))))))
+    (propel-gp! (all-the-required-args cli-args))))
