@@ -66,13 +66,6 @@
     (- x)
     x))
 
-(defn not-lazy
-  "Returns lst if it is not a list, or a non-lazy version of lst if it is."
-  [lst]
-  (if (seq? lst)
-    (apply list lst)
-    lst))
-
 (defn push-to-stack
   "Pushes item onto stack in state"
   [state stack item]
