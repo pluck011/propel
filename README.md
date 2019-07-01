@@ -26,16 +26,17 @@ The default arguments at present are:
     - cannot be changed in CLI; pass in a collection of instruction symbols when calling programmatically
 - `:target-problem :simple-cubic`
     - `:simple-quadratic`
-    - `:birthday-quadratic`
-    - `:contains-T?`
-    - `:contains-TA?`
+    - `:birthday-quadratic` (fit a simple quadratic with large constants)
+    - `:contains-T?` (does the given string contain a `T`?)
+    - `:contains-TA-or-AT?` (does the given string contain either substring?)
     - (**note**: earlier versions of this code permitted symbols as arguments, but not any more)
 - `:population-size 200`
 - `:max-initial-plushy-size 50`
-- `:step-limit 100`
+- `:step-limit 100` (max number of steps to allow each program to run)
 - `:parent-selection :tournament`
-- `:misbehavior-penalty 1000000`
-- `:tournament-size 5`
+  - :`lexicase`
+- `:misbehavior-penalty 1000000` ("fine" for not producing the desired behavior (item on a stack specified in the problem definition))
+- `:tournament-size 5` (only useful when `:parent-selection :tournament`)
 
 
 ## Description

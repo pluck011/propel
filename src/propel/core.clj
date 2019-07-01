@@ -14,8 +14,9 @@
 ;;   - :simple-quadratic
 ;;   - :birthday-quadratic
 ;;   - :contains-T?
-;;   - :contains-TA?
+;;   - :contains-TA-or-AT?
 ;; :population-size 200
+;; :max-generations 100
 ;; :max-initial-plushy-size 50
 ;; :step-limit 100
 ;; :parent-selection :tournament
@@ -605,11 +606,22 @@
    :error-function binary-classification-error-function
    })
 
+(defn random-string
+  [letters max-size]
+  (clojure.string/join
+    (repeatedly
+      (+ 2 (rand-int (- max-size 2)))
+      #(rand-nth letters)
+      )))
 
-(def contains-TA?-demo
-  "Return true if the string contains substring 'TA', over the specified collection of inputs, with the result on :boolean"
-  {:fxn (fn [s] (boolean (re-find #"TA" s)))
-   :args ["GCG" "GACAG" "AGAAG" "CCCA" "GATTACA" "TAGG" "GACT" "GACTA" "GATAC" "TA" "AT" "CG" "GCT" "GCA" "ATT"]
+(def string-args
+  (repeatedly 30 #(random-string ["A" "C" "G" "T"] 10))
+  )
+
+(def contains-TA-or-AT?-demo
+  "Return true if the string contains substring 'TA' or 'AT', over a run-specific random sample of inputs, with the result on :boolean"
+  {:fxn (fn [s] (or (boolean (re-find #"AT" s)) (boolean (re-find #"TA" s))))
+   :args string-args
    :behavior :boolean
    :error-function binary-classification-error-function
    })
@@ -621,7 +633,7 @@
    :simple-quadratic simple-quadratic-demo
    :birthday-quadratic birthday-quadratic-demo
    :contains-T? contains-T?-demo
-   :contains-TA? contains-TA?-demo
+   :contains-TA-or-AT? contains-TA-or-AT?-demo
    })
 
 ;;;;;;;;;;;;;;;;;;
