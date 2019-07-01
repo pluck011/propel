@@ -460,8 +460,8 @@
       )))
 
 (defn propel-gp!
-  "Main GP loop, rewritten to use a population atom and a doseq."
-  [{:keys [population-size max-generations error-function instructions
+  "Main GP loop, rewritten to use a population atom and a dotimes."
+  [steps {:keys [population-size max-generations error-function instructions
            max-initial-plushy-size]
     :as argmap}]
 
@@ -470,7 +470,7 @@
                  population-size
                  instructions
                  max-initial-plushy-size)
-  (doseq [gen (range 0 100)]
+  (dotimes [gen max-generations]
     (let [evaluated-pop
            (score-sorted-population @population-atom error-function argmap)]
       (report-generation evaluated-pop gen)
@@ -636,6 +636,7 @@
     :parent-selection :tournament
     :misbehavior-penalty 1000000
     :tournament-size 5
+    :max-generations 100
     })
 
 
@@ -658,4 +659,4 @@
   "Runs propel-gp! from command line, giving it a map of arguments. Use function calls to 'propel-setup! and 'propel-population-step to walk through search using an external caller."
   [& cli-args]
   (binding [*ns* (the-ns 'propel.core)]
-    (propel-gp! (all-the-required-args cli-args))))
+    (propel-gp! 5 (all-the-required-args cli-args))))
