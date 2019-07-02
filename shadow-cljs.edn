@@ -1,0 +1,10 @@
+{:source-paths ["src"]
+ :dependencies []
+ :dev-http {8080 "target/"}
+ :builds {:app {:output-dir "target/"
+                :asset-path "."
+                :target :browser
+                :modules {:main {:init-fn propel.core/cljs-main}}
+                :devtools {:after-load propel.core/reload!
+                           :http-root "target"
+                           :http-port 8080}}}}

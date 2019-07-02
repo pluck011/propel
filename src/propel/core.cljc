@@ -152,15 +152,15 @@
 
 (defn integer_+
   [state]
-  (make-push-instruction state +' [:integer :integer] :integer))
+  (make-push-instruction state + [:integer :integer] :integer))
 
 (defn integer_-
   [state]
-  (make-push-instruction state -' [:integer :integer] :integer))
+  (make-push-instruction state - [:integer :integer] :integer))
 
 (defn integer_*
   [state]
-  (make-push-instruction state *' [:integer :integer] :integer))
+  (make-push-instruction state * [:integer :integer] :integer))
 
 (defn integer_%
   [state]
@@ -478,7 +478,9 @@
                  max-initial-plushy-size)
   (dotimes [gen max-generations]
     (let [evaluated-pop
-           (score-sorted-population @population-atom error-function argmap)]
+           (if (:errors (first @population-atom))
+              @population-atom
+              (score-sorted-population @population-atom error-function argmap))]
       (report-generation evaluated-pop gen)
 
       (reset! population-atom
@@ -540,7 +542,7 @@
     (assoc individual
            :behaviors outputs
            :errors errors
-           :total-error (apply +' errors))
+           :total-error (apply + errors))
            ))
 
 (defn classification-errors
@@ -569,7 +571,7 @@
     (assoc individual
            :behaviors outputs
            :errors errors
-           :total-error (apply +' errors))
+           :total-error (apply + errors))
            ))
 
 ;; example problems
@@ -672,8 +674,19 @@
 
 ;;;;;;;;;;;;;;
 
+(defn reload! []
+  (println "Code updated.")
+  (println "Trying values:" 12 13))
+
+(defn cljs-main
+  []
+  (propel-setup! @population-atom 100 default-instructions 100)
+  (propel-gp! 5 (all-the-required-args ""))
+  )
+
 (defn -main
   "Runs propel-gp! from command line, giving it a map of arguments. Use function calls to 'propel-setup! and 'propel-population-step to walk through search using an external caller."
   [& cli-args]
   (binding [*ns* (the-ns 'propel.core)]
+    (println (str cli-args))
     (propel-gp! 5 (all-the-required-args cli-args))))
