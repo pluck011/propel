@@ -28,28 +28,31 @@
 ; Instructions must all be either functions that take one Push state and return another
 ; or constant literals.
 ; TMH: ERCs?
+(def push-instructions
+  '[in1
+   integer_+
+   integer_-
+   integer_*
+   integer_%
+   integer_=
+   exec_dup
+   exec_if
+   boolean_and
+   boolean_or
+   boolean_not
+   boolean_=
+   string_=
+   string_take
+   string_drop
+   string_reverse
+   string_concat
+   string_length
+   string_includes?
+   ])
+
 (def default-instructions
-  (list
-   'in1
-   'integer_+
-   'integer_-
-   'integer_*
-   'integer_%
-   'integer_=
-   'exec_dup
-   'exec_if
-   'boolean_and
-   'boolean_or
-   'boolean_not
-   'boolean_=
-   'string_=
-   'string_take
-   'string_drop
-   'string_reverse
-   'string_concat
-   'string_length
-   'string_includes?
-   'close
+  (concat push-instructions
+  ['close
    0
    1
    10
@@ -61,7 +64,9 @@
    "A"
    "C"
    "G"
-   "T"))
+   "T"
+   ]))
+
 
 (def opens ; number of blocks opened by instructions (default = 0)
   {'exec_dup 1
