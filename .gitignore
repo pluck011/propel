@@ -10,3 +10,6 @@ pom.xml.asc
 .hgignore
 .hg/
 .gorilla-port
+.shadow-cljs
+.DS_Store
+.cpcache/*
