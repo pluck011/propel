@@ -471,8 +471,9 @@
     [fxn (:fxn (:training-function argmap))
      errfxn (:error-function fxn)
      instructions (:instructions argmap)
-     evaluated-pop
-          (score-sorted-population population errfxn argmap)]
+     evaluated-pop (if (:errors (first population))
+          population
+          (score-sorted-population population errfxn argmap))]
     (repeatedly
       (count population)
       #(new-individual evaluated-pop argmap)
