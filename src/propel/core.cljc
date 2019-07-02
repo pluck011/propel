@@ -1,4 +1,8 @@
-(ns propel.core)
+(ns propel.core
+  (:require
+    [clojure.string :as string]
+    #?(:cljs [cljs.reader :refer [read-string]])
+    ))
 
 
 ;; TO DO
@@ -248,6 +252,15 @@
 ;;;;;;;;;
 ;; Interpreter
 
+(defn cljc-throw
+  [item]
+  (throw
+    (#?@(:clj [Exception.]
+         :cljs [js/Error.])
+      (str
+        "Unrecognized Push instruction in program: "
+        item))))
+
 (defn interpret-one-step
   "Takes a Push state and executes the next instruction on the exec stack."
   [state]
@@ -273,8 +286,8 @@
       (push-to-stack popped-state :boolean first-instruction)
       ;
       :else
-      (throw (Exception. (str "Unrecognized Push instruction in program: "
-                              first-instruction))))))
+      (cljc-throw first-instruction)
+      )))
 
 (defn interpret-program
   "Runs the given problem starting with the stacks in start-state."
@@ -658,12 +671,17 @@
     :max-generations 100
     })
 
+(defn cljc-read-string
+  [string]
+  #?(:clj (read-string string)
+     :cljs (cljs.reader/read-string string)
+     ))
 
 (defn all-the-required-args
   "Omnibus function to handle all the arguments in play: The CLI arguments are parsed, then merged with the default arguments. Then the dependent args (problem symbol and error measure, given the target problem specified) are calculated and merged into the resulting hash."
   [user-defined-argmap]
   (let [merged (->> user-defined-argmap
-               (map read-string ,)
+               (map cljc-read-string ,)
                (apply hash-map ,)
                (merge default-args ,))
         demo (get demo-problems (:target-problem merged) :UNKNOWN-PROBLEM)]
@@ -684,9 +702,11 @@
   (propel-gp! 5 (all-the-required-args ""))
   )
 
-(defn -main
-  "Runs propel-gp! from command line, giving it a map of arguments. Use function calls to 'propel-setup! and 'propel-population-step to walk through search using an external caller."
-  [& cli-args]
-  (binding [*ns* (the-ns 'propel.core)]
-    (println (str cli-args))
-    (propel-gp! 5 (all-the-required-args cli-args))))
+#?(:clj
+    (defn -main
+      "Runs propel-gp! from command line, giving it a map of arguments. Use function calls to 'propel-setup! and 'propel-population-step to walk through search using an external caller."
+      [& cli-args]
+      (binding [*ns* (the-ns 'propel.core)]
+        (println (str cli-args))
+        (propel-gp! 5 (all-the-required-args cli-args))
+        )))
