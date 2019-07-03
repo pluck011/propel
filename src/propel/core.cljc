@@ -463,7 +463,7 @@
 
 (def population-atom (atom [])) ;; stores population between steps
 (def args-atom (atom {})) ;; stores arg hash
-(def external-control (atom true)) ;; intended to be overridden externally
+(def pause-control (atom true)) ;; intended to be overridden externally
 
 (defn propel-setup!
   "Build an initial population using the specified arguments, placing it in the specified atom"
@@ -715,11 +715,8 @@
 
 ;;;;;;;;;;;;;;
 
-(defn reload! []
-  (println "Code updated.")
-  (println "Trying values:" 12 13))
-
-(defn cljs-main
+(defn repl-main
+  "Provided as a simple hands-on check for somebody working in a cljs REPL. Accepts no arguments! Just to see that things are \"working\"..."
   []
   (collect-the-args! args-atom :override-hash {:max-generations 3})
   (apply propel-gp! (mapcat seq @args-atom))

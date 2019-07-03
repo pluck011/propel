@@ -75,10 +75,10 @@ Best behaviors: (-1000 -900 -800 -700 -600 -500 -400 -300 -200 -100 0 100 200 30
 
 ```
 
-Or, if you just want to see it work in cljs, there's a simple `cljs-main` function that runs a quick setup-and-couple-of-steps for you, taking no arguments:
+Or, if you just want to see it work in a REPL, there's a simple `repl-main` function that runs a quick setup-and-couple-of-steps for you, taking no arguments:
 
 ```
-cljs.user=> (p/cljs-main)
+cljs.user=> (p/repl-main)
 
 Starting GP with args: {:max-initial-plushy-size 50, :misbehavior-penalty 1000000, :target-problem :simple-cubic, :instructions (integer_- integer_+ in1 boolean_or string_= integer_= exec_dup string_reverse boolean_= integer_% string_concat string_drop string_take integer_* exec_if boolean_not string_includes? boolean_and string_length close 0 1 10 100 true false  ABCDEFGHIJKLMNOPQRSTUVWXYZ A C G T), :max-generations 3, :parent-selection :tournament, :training-function {:fxn #object[Function], :args (-10 -9 -8 -7 -6 -5 -4 -3 -2 -1 0 1 2 3 4 5 6 7 8 9 10), :behavior :integer, :error-function #object[propel$core$regression_error_function]}, :tournament-size 5, :step-limit 100, :error-function #object[propel$core$regression_error_function], :population-size 200}
 -------------------------------------------------------
