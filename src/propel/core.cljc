@@ -29,47 +29,7 @@
 ;; :tournament-size 5
 
 
-; Instructions must all be either functions that take one Push state and return another
-; or constant literals.
-; TMH: ERCs?
-(def push-instructions
-  '[in1
-   integer_+
-   integer_-
-   integer_*
-   integer_%
-   integer_=
-   exec_dup
-   exec_if
-   boolean_and
-   boolean_or
-   boolean_not
-   boolean_=
-   string_=
-   string_take
-   string_drop
-   string_reverse
-   string_concat
-   string_length
-   string_includes?
-   ])
-
-(def default-instructions
-  (concat push-instructions
-  ['close
-   0
-   1
-   10
-   100
-   true
-   false
-   ""
-   "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-   "A"
-   "C"
-   "G"
-   "T"
-   ]))
+; Instructions must all be either functions that take one Push state and return another or constant literals.
 
 
 (def opens ; number of blocks opened by instructions (default = 0)
@@ -249,6 +209,46 @@
   [state]
   (make-push-instruction state clojure.string/includes? [:string :string] :boolean))
 
+
+(def push-instructions
+  [in1
+   integer_+
+   integer_-
+   integer_*
+   integer_%
+   integer_=
+   exec_dup
+   exec_if
+   boolean_and
+   boolean_or
+   boolean_not
+   boolean_=
+   string_=
+   string_take
+   string_drop
+   string_reverse
+   string_concat
+   string_length
+   string_includes?
+   ])
+
+(def default-instructions
+  (concat push-instructions
+    ['close
+     0
+     1
+     10
+     100
+     true
+     false
+     ""
+     "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+     "A"
+     "C"
+     "G"
+     "T"
+     ]))
+
 ;;;;;;;;;
 ;; Interpreter
 
@@ -261,16 +261,19 @@
         "Unrecognized Push instruction in program: "
         item))))
 
+(defn push-instruction?
+  [item]
+  (some #{item (quote item)} push-instructions))
+
+
 (defn interpret-one-step
   "Takes a Push state and executes the next instruction on the exec stack."
   [state]
   (let [popped-state (pop-stack state :exec)
-        first-raw (first (:exec state))
-        first-instruction (if (symbol? first-raw)
-                            (eval first-raw)
-                            first-raw)]
+        first-instruction (first (:exec state))]
+
     (cond
-      (fn? first-instruction)
+      (push-instruction? first-instruction)
       (first-instruction popped-state)
       ;
       (integer? first-instruction)
@@ -325,6 +328,7 @@
 
 ;;;;;;;;;
 ;; GP
+
 
 (defn make-random-plushy
   "Creates and returns a new plushy."
@@ -455,6 +459,7 @@
 ;;;;;;;;;;;;;;;;
 
 (def population-atom (atom [])) ;; stores population between steps
+(def args-atom (atom {})) ;; stores arg hash
 (def external-control (atom true)) ;; intended to be overridden externally
 
 (defn propel-setup!
@@ -481,7 +486,7 @@
 
 (defn propel-gp!
   "Main GP loop, rewritten to use a population atom and a dotimes."
-  [steps {:keys [population-size max-generations error-function instructions
+  [& {:keys [population-size max-generations error-function instructions
            max-initial-plushy-size]
     :as argmap}]
 
@@ -660,7 +665,7 @@
 ;;;;;;;;;;;;;;;;;;
 
 (def default-args
-  "Default argument hash, merged in 'all-the-required-args with those provided by the calling function."
+  "Default argument hash, which is modified by a hash and CLI args."
    {:instructions default-instructions
     :target-problem :simple-cubic
     :population-size 200
@@ -678,18 +683,26 @@
      :cljs (cljs.reader/read-string string)
      ))
 
-(defn all-the-required-args
-  "Omnibus function to handle all the arguments in play: The CLI arguments are parsed, then merged with the default arguments. Then the dependent args (problem symbol and error measure, given the target problem specified) are calculated and merged into the resulting hash."
-  [user-defined-argmap]
-  (let [merged (->> user-defined-argmap
-               (map cljc-read-string ,)
-               (apply hash-map ,)
-               (merge default-args ,))
+(defn parse-cli-args
+  [arg-strings]
+  (->> arg-strings
+      (map cljc-read-string ,)
+      (apply hash-map ,)
+      ))
+
+(defn collect-the-args!
+  "Omnibus function to merge all the arguments in play, and store them in the atom specified.
+
+  If no optional arguments are passed in, the default-args result. The other named arguments are :cli-hash (for parsed arguments from a command line) and :override-hash (for a hash of arguments passed in programmatically). These are merged into default-args in that order. Finally, some necessary derived arguments are inserted."
+  [arg-atom & {:keys [cli-hash override-hash] :or {cli-hash {} override-hash {}}}]
+  (let [merged (merge default-args cli-hash override-hash)
         demo (get demo-problems (:target-problem merged) :UNKNOWN-PROBLEM)]
-    (-> merged
-       (assoc , :training-function demo)
-       (assoc , :error-function (:error-function demo))
-       )))
+    (reset!
+      arg-atom
+      (-> merged
+        (assoc , :training-function demo)
+        (assoc , :error-function (:error-function demo))
+        ))))
 
 ;;;;;;;;;;;;;;
 
@@ -699,8 +712,9 @@
 
 (defn cljs-main
   []
-  (propel-setup! @population-atom 100 default-instructions 100)
-  (propel-gp! 5 (all-the-required-args ""))
+  ; (propel-setup! @population-atom 100 default-instructions 100)
+  (collect-the-args! args-atom :override-hash {:max-generations 3})
+  (apply propel-gp! (mapcat seq @args-atom))
   )
 
 #?(:clj
@@ -708,6 +722,8 @@
       "Runs propel-gp! from command line, giving it a map of arguments. Use function calls to 'propel-setup! and 'propel-population-step to walk through search using an external caller."
       [& cli-args]
       (binding [*ns* (the-ns 'propel.core)]
-        (println (str cli-args))
-        (propel-gp! 5 (all-the-required-args cli-args))
+        (collect-the-args! args-atom
+          :cli-hash (parse-cli-args cli-args))
+        (println @args-atom)
+        (apply propel-gp! (mapcat seq @args-atom))
         )))
