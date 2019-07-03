@@ -294,6 +294,7 @@
       (cljc-throw first-instruction)
       )))
 
+
 (defn interpret-program
   "Runs the given problem starting with the stacks in start-state."
   [program start-state step-limit]
@@ -302,6 +303,7 @@
             (> (:step state) step-limit))
       state
       (recur (update (interpret-one-step state) :step inc)))))
+
 
 (defn push-from-plushy
   "Returns the Push program expressed by the given plushy representation."
@@ -338,12 +340,14 @@
   (repeatedly (rand-int max-initial-plushy-size)
               #(rand-nth instructions)))
 
+
 (defn tournament-selection
   "Selects an individual from the population using a tournament."
   [pop argmap]
   (let [tournament-size (:tournament-size argmap)
         tournament-set (take tournament-size (shuffle pop))]
     (apply min-key :total-error tournament-set)))
+
 
 (defn lexicase-selection
   "Selects an individual from the population using lexicase selection."
@@ -364,12 +368,14 @@
             (rest cases)
             )))))
 
+
 (defn select-parent
   "Selects a parent from the population using the specified method."
   [pop argmap]
   (case (:parent-selection argmap)
     :tournament (tournament-selection pop argmap)
     :lexicase (lexicase-selection pop argmap)))
+
 
 (defn crossover
   "Crosses over two individuals using uniform crossover. Pads shorter one."
@@ -385,6 +391,7 @@
                  shorter-padded
                  longer))))
 
+
 (defn uniform-addition
   "Randomly adds new instructions before every instruction (and at the end of
   the plushy) with some probability."
@@ -398,17 +405,25 @@
             (interleave (conj plushy :mutation-padding)
                         rand-code))))
 
+
 (defn uniform-deletion
   "Randomly deletes instructions from plushy at some rate."
   [plushy]
   (remove (fn [x] (< (rand) 0.05))
           plushy))
 
+(defn cljc-uuid
+  []
+  #?(:clj (.toString (java.util.UUID/randomUUID))
+    :cljs (random-uuid)
+    ))
+
 (defn new-individual
   "Returns a new individual produced by selection and variation of
   individuals in the population."
   [pop argmap]
-  {:plushy
+  {:id (cljc-uuid)
+   :plushy
    (let [prob (rand)]
      (cond
        (< prob 0.5) (crossover (:plushy (select-parent pop argmap))
