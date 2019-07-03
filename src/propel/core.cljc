@@ -412,12 +412,16 @@
   (remove (fn [x] (< (rand) 0.05))
           plushy))
 
+(defn new-uuid
+  "conditional UUID producer"
+  []
+  (str #?(:clj (java.util.UUID/randomUUID) :cljs (random-uuid))))
 
 (defn new-individual
   "Returns a new individual produced by selection and variation of
   individuals in the population."
   [pop argmap]
-  {:id (cljc-uuid)
+  {:id (new-uuid)
    :plushy
    (let [prob (rand)]
      (cond
@@ -446,17 +450,13 @@
 (defn report-starting-line
   [args] (println "Starting GP with args:" args))
 
-(defn cljc-uuid
-  []
-  #?(:clj (.toString (java.util.UUID/randomUUID))
-    :cljs (random-uuid)
-    ))
+
 
 (defn random-individual
   "Produce one random individual"
   [instructions max-size]
   (hash-map
-    :id (cljc-uuid)
+    :id (new-uuid)
     :plushy
       (make-random-plushy instructions max-size)
       ))
