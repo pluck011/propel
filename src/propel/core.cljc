@@ -210,30 +210,30 @@
   (make-push-instruction state clojure.string/includes? [:string :string] :boolean))
 
 
-(def push-instructions
-  [in1
-   integer_+
-   integer_-
-   integer_*
-   integer_%
-   integer_=
-   exec_dup
-   exec_if
-   boolean_and
-   boolean_or
-   boolean_not
-   boolean_=
-   string_=
-   string_take
-   string_drop
-   string_reverse
-   string_concat
-   string_length
-   string_includes?
-   ])
+(def push-instruction-registry
+  {'in1 in1
+   'integer_+ integer_+
+   'integer_- integer_-
+   'integer_* integer_*
+   'integer_% integer_%
+   'integer_= integer_=
+   'exec_dup exec_dup
+   'exec_if exec_if
+   'boolean_and boolean_and
+   'boolean_or boolean_or
+   'boolean_not boolean_not
+   'boolean_= boolean_=
+   'string_= string_=
+   'string_take string_take
+   'string_drop string_drop
+   'string_reverse string_reverse
+   'string_concat string_concat
+   'string_length string_length
+   'string_includes? string_includes?
+   })
 
 (def default-instructions
-  (concat push-instructions
+  (concat (keys push-instruction-registry)
     ['close
      0
      1
@@ -263,7 +263,7 @@
 
 (defn push-instruction?
   [item]
-  (some #{item (quote item)} push-instructions))
+  (contains? push-instruction-registry item))
 
 
 (defn interpret-one-step
@@ -274,7 +274,7 @@
 
     (cond
       (push-instruction? first-instruction)
-      (first-instruction popped-state)
+      ((get push-instruction-registry first-instruction) popped-state)
       ;
       (integer? first-instruction)
       (push-to-stack popped-state :integer first-instruction)
