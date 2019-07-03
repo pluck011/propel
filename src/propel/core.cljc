@@ -115,15 +115,18 @@
 
 (defn integer_+
   [state]
-  (make-push-instruction state + [:integer :integer] :integer))
+  (make-push-instruction
+    state #?@(:clj [+'] :cljs [+]) [:integer :integer] :integer))
 
 (defn integer_-
   [state]
-  (make-push-instruction state - [:integer :integer] :integer))
+  (make-push-instruction
+    state #?@(:clj [-'] :cljs [-]) [:integer :integer] :integer))
 
 (defn integer_*
   [state]
-  (make-push-instruction state * [:integer :integer] :integer))
+  (make-push-instruction
+    state #?@(:clj [*'] :cljs [*]) [:integer :integer] :integer))
 
 (defn integer_%
   [state]
@@ -427,7 +430,7 @@
     (println "Best errors:" (:errors best))
     (println "Best behaviors:" (:behaviors best))
     (println)
-    (flush)))
+    ))
 
 
 (defn report-starting-line
@@ -561,7 +564,7 @@
     (assoc individual
            :behaviors outputs
            :errors errors
-           :total-error (apply + errors))
+           :total-error (apply #?@(:clj [+'] :cljs [+]) errors))
            ))
 
 (defn classification-errors
@@ -590,7 +593,7 @@
     (assoc individual
            :behaviors outputs
            :errors errors
-           :total-error (apply + errors))
+           :total-error (apply #?@(:clj [+'] :cljs [+]) errors))
            ))
 
 ;; example problems
@@ -598,7 +601,8 @@
 
 (def simple-quadratic-demo
   "Target function: f(x) = 7x^2 - 20x + 13, over the range [-10,11), with the result on :integer"
-  {:fxn (fn [x] (+ (* 7 x x) (* -20 x) 13))
+  {:fxn #?(:clj (fn [x] (+' (*' 7 x x) (*' -20 x) 13))
+           :cljs (fn [x] (+ (* 7 x x) (* -20 x) 13)))
    :args (range -10 11)
    :behavior :integer
    :error-function regression-error-function
@@ -607,17 +611,22 @@
 
 (def simple-cubic-demo
   "Target function: f(x) = x^3 + x + 3, over the range [-10,11), with the result on :integer"
-  {:fxn (fn [x] (+ (* x x x) x 3))
+  {:fxn #?(:clj (fn [x] (+' (*' x x x) x 3))
+           :cljs (fn [x] (+ (* x x x) x 3)))
    :args (range -10 11)
    :behavior :integer
    :error-function regression-error-function
    })
 
 
+(def birthday-args
+  (take 10 (random-sample 0.01 (range))))
+
 (def birthday-quadratic-demo
-  "Target function: f(x) = 1964 - 11*x + 9x^2, over the range [0,13), with the result on :integer"
-  {:fxn (fn [x] (+ (* 9 x x) (* -11 x) 1964))
-   :args (range 0 13)
+  "Target function: f(x) = 1964 - 11*x + 9x^2, over a random collection of integer arguments, with the result on :integer"
+  {:fxn #?(:clj (fn [x] (+' (*' 9 x x) (*' -11 x) 1964))
+           :cljs (fn [x] (+ (* 9 x x) (* -11 x) 1964)))
+   :args birthday-args
    :behavior :integer
    :error-function regression-error-function
    })
