@@ -427,7 +427,8 @@
     (println "Best total error:" (:total-error best))
     (println "Best errors:" (:errors best))
     (println "Best behaviors:" (:behaviors best))
-    (println)))
+    (println)
+    (flush)))
 
 
 (defn report-starting-line
@@ -712,7 +713,6 @@
 
 (defn cljs-main
   []
-  ; (propel-setup! @population-atom 100 default-instructions 100)
   (collect-the-args! args-atom :override-hash {:max-generations 3})
   (apply propel-gp! (mapcat seq @args-atom))
   )
