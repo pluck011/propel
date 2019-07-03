@@ -40,7 +40,7 @@ The default arguments at present are:
 
 ### cljs.main
 
-To open a web-repl, invoke `clj -m cljs.main` in a shell in the project folder. This will open a (for the moment, unused) browser window, and a REPL. This does not automatically load the project into the REPL, so try this:
+To open a web-repl, invoke `clj -m cljs.main` in a shell in the project folder. This will open a (for the moment, unused) browser window, and a REPL. This does not automatically load the project into the REPL, so you should try something like this (although *be patient* because the printed report will not emit until after the entire run is finished!):
 
 ```
 cljs.user=> (require '[propel.core :as p])
