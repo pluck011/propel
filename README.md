@@ -40,7 +40,76 @@ The default arguments at present are:
 
 ### cljs.main
 
-To open a web-repl, invoke `clj -m cljs.main` in a shell in the project folder. This will open a (for the moment, unused) browser window, and a REPL. This does not automatically load the project into the REPL, so start with `(require 'propel.core)` to have access to it.
+To open a web-repl, invoke `clj -m cljs.main` in a shell in the project folder. This will open a (for the moment, unused) browser window, and a REPL. This does not automatically load the project into the REPL, so try this:
+
+```
+cljs.user=> (require '[propel.core :as p])
+
+nil
+
+cljs.user=> (p/collect-the-args! p/args-atom :override-hash {:max-generations 10}) ;; load arg defaults and merge specified overrides
+
+{:max-initial-plushy-size 50, :misbehavior-penalty 1000000, :target-problem :simple-cubic, :instructions (integer_- integer_+ in1 boolean_or string_= integer_= exec_dup string_reverse boolean_= integer_% string_concat string_drop string_take integer_* exec_if boolean_not string_includes? boolean_and string_length close 0 1 10 100 true false "" "ABCDEFGHIJKLMNOPQRSTUVWXYZ" "A" "C" "G" "T"), :max-generations 10, :parent-selection :tournament, :training-function {:fxn #object[Function], :args (-10 -9 -8 -7 -6 -5 -4 -3 -2 -1 0 1 2 3 4 5 6 7 8 9 10), :behavior :integer, :error-function #object[propel$core$regression_error_function]}, :tournament-size 5, :step-limit 100, :error-function #object[propel$core$regression_error_function], :population-size 200}
+
+cljs.user=> (apply p/propel-gp! (mapcat seq @p/args-atom)) ;; invoke propel-gp! on the argument hash stored in the atom state
+
+Starting GP with args: {:max-initial-plushy-size 50, :misbehavior-penalty 1000000, :target-problem :simple-cubic, :instructions (integer_- integer_+ in1 boolean_or string_= integer_= exec_dup string_reverse boolean_= integer_% string_concat string_drop string_take integer_* exec_if boolean_not string_includes? boolean_and string_length close 0 1 10 100 true false  ABCDEFGHIJKLMNOPQRSTUVWXYZ A C G T), :max-generations 10, :parent-selection :tournament, :training-function {:fxn #object[Function], :args (-10 -9 -8 -7 -6 -5 -4 -3 -2 -1 0 1 2 3 4 5 6 7 8 9 10), :behavior :integer, :error-function #object[propel$core$regression_error_function]}, :tournament-size 5, :step-limit 100, :error-function #object[propel$core$regression_error_function], :population-size 200}
+-------------------------------------------------------
+               Report for Generation 0
+-------------------------------------------------------
+Best plushy: (integer_+ string_includes? string_includes? string_= string_take false string_length integer_% "ABCDEFGHIJKLMNOPQRSTUVWXYZ" boolean_= string_includes? exec_dup string_= 0 100 integer_+ "G" "ABCDEFGHIJKLMNOPQRSTUVWXYZ" "" in1 string_= integer_* "G" exec_dup "ABCDEFGHIJKLMNOPQRSTUVWXYZ" "")
+Best program: (integer_+ string_includes? string_includes? string_= string_take false string_length integer_% "ABCDEFGHIJKLMNOPQRSTUVWXYZ" boolean_= string_includes? exec_dup (string_= 0 100 integer_+ "G" "ABCDEFGHIJKLMNOPQRSTUVWXYZ" "" in1 string_= integer_* "G" exec_dup ("ABCDEFGHIJKLMNOPQRSTUVWXYZ" "")))
+Best total error: 4883
+Best errors: (7 165 283 353 381 373 335 273 193 101 3 95 187 267 329 367 375 347 277 159 13)
+Best behaviors: (-1000 -900 -800 -700 -600 -500 -400 -300 -200 -100 0 100 200 300 400 500 600 700 800 900 1000)
+
+-------------------------------------------------------
+               Report for Generation 1
+-------------------------------------------------------
+Best plushy: (integer_+ string_includes? string_includes? string_= string_take false string_length integer_% "ABCDEFGHIJKLMNOPQRSTUVWXYZ" boolean_= string_includes? exec_dup string_= integer_- 0 100 integer_+ "G" "ABCDEFGHIJKLMNOPQRSTUVWXYZ" "" in1 string_= integer_* "G" exec_dup "ABCDEFGHIJKLMNOPQRSTUVWXYZ" "")
+Best program: (integer_+ string_includes? string_includes? string_= string_take false string_length integer_% "ABCDEFGHIJKLMNOPQRSTUVWXYZ" boolean_= string_includes? exec_dup (string_= integer_- 0 100 integer_+ "G" "ABCDEFGHIJKLMNOPQRSTUVWXYZ" "" in1 string_= integer_* "G" exec_dup ("ABCDEFGHIJKLMNOPQRSTUVWXYZ" "")))
+Best total error: 4883
+Best errors: (7 165 283 353 381 373 335 273 193 101 3 95 187 267 329 367 375 347 277 159 13)
+Best behaviors: (-1000 -900 -800 -700 -600 -500 -400 -300 -200 -100 0 100 200 300 400 500 600 700 800 900 1000)
+...
+
+```
+
+Or, if you just want to see it work in cljs, there's a simple `cljs-main` function that runs a quick setup-and-couple-of-steps for you, taking no arguments:
+
+```
+cljs.user=> (p/cljs-main)
+
+Starting GP with args: {:max-initial-plushy-size 50, :misbehavior-penalty 1000000, :target-problem :simple-cubic, :instructions (integer_- integer_+ in1 boolean_or string_= integer_= exec_dup string_reverse boolean_= integer_% string_concat string_drop string_take integer_* exec_if boolean_not string_includes? boolean_and string_length close 0 1 10 100 true false  ABCDEFGHIJKLMNOPQRSTUVWXYZ A C G T), :max-generations 3, :parent-selection :tournament, :training-function {:fxn #object[Function], :args (-10 -9 -8 -7 -6 -5 -4 -3 -2 -1 0 1 2 3 4 5 6 7 8 9 10), :behavior :integer, :error-function #object[propel$core$regression_error_function]}, :tournament-size 5, :step-limit 100, :error-function #object[propel$core$regression_error_function], :population-size 200}
+-------------------------------------------------------
+               Report for Generation 0
+-------------------------------------------------------
+Best plushy: (exec_if string_concat string_includes? string_concat 10 in1 in1 0 integer_+ string_drop boolean_or integer_+ "T")
+Best program: (exec_if (string_concat string_includes? string_concat 10 in1 in1 0 integer_+ string_drop boolean_or integer_+ "T") ())
+Best total error: 5949
+Best errors: (987 717 501 333 207 117 57 21 3 3 3 3 9 27 63 123 213 339 507 723 993)
+Best behaviors: (-20 -18 -16 -14 -12 -10 -8 -6 -4 -2 0 2 4 6 8 10 12 14 16 18 20)
+
+-------------------------------------------------------
+               Report for Generation 1
+-------------------------------------------------------
+Best plushy: ("C" false exec_dup 1 string_includes? string_take string_drop string_= in1 1 string_concat string_reverse integer_- integer_- "T" integer_* "T" "ABCDEFGHIJKLMNOPQRSTUVWXYZ" integer_% string_includes?)
+Best program: ("C" false exec_dup (1 string_includes? string_take string_drop string_= in1 1 string_concat string_reverse integer_- integer_- "T" integer_* "T" "ABCDEFGHIJKLMNOPQRSTUVWXYZ" integer_% string_includes?))
+Best total error: 5859
+Best errors: (875 625 427 275 163 85 35 7 5 7 5 5 13 35 77 145 245 383 565 797 1085)
+Best behaviors: (-132 -110 -90 -72 -56 -42 -30 -20 -12 -6 -2 0 0 -2 -6 -12 -20 -30 -42 -56 -72)
+
+-------------------------------------------------------
+               Report for Generation 2
+-------------------------------------------------------
+Best plushy: (string_reverse string_drop exec_if integer_* boolean_= string_concat in1 in1 integer_* in1 integer_* exec_dup string_length false 0 integer_- false true string_drop)
+Best program: (string_reverse string_drop exec_if (integer_* boolean_= string_concat in1 in1 integer_* in1 integer_* exec_dup (string_length false 0 integer_- false true string_drop)) ())
+Best total error: 119
+Best errors: (7 6 5 4 3 2 1 0 1 2 3 4 5 6 7 8 9 10 11 12 13)
+Best behaviors: (-1000 -729 -512 -343 -216 -125 -64 -27 -8 -1 0 1 8 27 64 125 216 343 512 729 1000)
+
+nil
+```
 
 ### Including it in a `cljs` project
 
