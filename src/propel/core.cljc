@@ -6,7 +6,6 @@
 
 
 ;; TO DO
-;; - :instructions argument broken for CLI, works for function calls
 ;; - bring tournament-size into specification of tournament selection directly (like :parent-selection (tournament 5))
 
 
@@ -455,6 +454,7 @@
 ;;;;;;;;;;;;;;;;
 
 (def population-atom (atom [])) ;; stores population between steps
+(def argmap-atom (atom {})) ;; stores arguments
 (def external-control (atom true)) ;; intended to be overridden externally
 
 (defn propel-setup!
