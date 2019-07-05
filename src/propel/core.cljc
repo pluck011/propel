@@ -501,7 +501,7 @@
           population
           (score-sorted-population population errfxn argmap))]
     (repeatedly
-      (count population)
+      (:population-size argmap)
       #(new-individual evaluated-pop argmap)
       )))
 
