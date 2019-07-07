@@ -1,10 +1,10 @@
 # propel
 
-Bill Tozier's fork of Lee Spector's Plushy fork of Tom Helmuth's little PushGP implementation in Clojure.
+Bill Tozier's fork of Lee Spector's Plushy fork of Tom Helmuth's little PushGP implementation in Clojure. It is work in progress, but reasonably stable at this point.
 
 ## project goals
 
-This fork (Bill's) exists because he's prepping it to be embedded in a ClojureScript web app for demonstration and tutorial purposes. That is, one wants a single `.cljc` file that will run from the command line or in a Clojure REPL, or ClojureScript suitable for use in a web app.
+This fork (Bill's) exists because he's prepping it to be embedded in a ClojureScript web app version for demonstration and tutorial purposes. That is, one wants a single `.cljc` file that will run from the command line or in a Clojure REPL, or ClojureScript suitable for use in a web app.
 
 Aside from various refactoring moves and clarifications, an important change is the move to a Clojure[script] `atom` for storing the state of the population of evolving solutions, and the removal of most "automatic" search functions. While there's still a command-line option to run the program for pedagogical reasons, the invoked function now (1) runs for exactly 100 generations, and (2) does not stop when a good solution is discovered.
 
@@ -18,7 +18,7 @@ To run PushGP on the default genetic programming problem from command line using
 
 Command-line arguments may be provided to override the defaults specified in `-main`, for example, `lein run :population-size 100`.
 
-Or for more fun try `lein run :target-problem :birthday-quadratic :max-generations 2 :parent-selection :lexicase`.
+Or for more fun try `lein run :target-problem :birthday-quadratic :max-generations 200 :parent-selection :lexicase`.
 
 The default arguments at present are:
 
@@ -27,15 +27,16 @@ The default arguments at present are:
 - `:target-problem :simple-cubic`
     - `:simple-quadratic`
     - `:birthday-quadratic` (fit a simple quadratic with large constants)
+    - `:random-regression` (fit a handful of randomly-selected data)
     - `:contains-T?` (does the given string contain a `T`?)
     - `:contains-TA-or-AT?` (does the given string contain either substring?)
-    - (**note**: earlier versions of this code permitted symbols as arguments, but not any more)
+    - `:contains-CC-or-AT?` (compare any solutions you find with the previous)
 - `:population-size 200`
 - `:max-initial-plushy-size 50`
 - `:step-limit 100` (max number of steps to allow each program to run)
 - `:parent-selection :tournament`
   - :`lexicase`
-- `:misbehavior-penalty 1000000` ("fine" for not producing the desired behavior (item on a stack specified in the problem definition))
+- `:misbehavior-penalty +1e12`
 - `:tournament-size 5` (only useful when `:parent-selection :tournament`)
 
 ### cljs.main
@@ -116,6 +117,8 @@ nil
 Should just work? `¯\_(ツ)_/¯`
 
 ## Description
+
+ `(text derived from parent projects)`
 
 Propel is a minimalist implementation of the Push programming language and the PushGP genetic programming system in Clojure.
 
