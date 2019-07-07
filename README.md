@@ -151,3 +151,71 @@ When these linear representations are used, they are translated into ordinary, p
 In the [Plush](https://push-language.hampshire.edu/t/plush-genomes/279) representation that is used in [Clojush](https://github.com/lspector/Clojush) and [PyshGP](https://github.com/erp12/pyshgp), markers are attached to instructions to indicate how many closing parentheses should be inserted after that instruction is translated.
 
 Here, we instead use the "Plushy" representation, in which we allow `close` instructions to be included in the linear sequences of instructions. These are converted into closing parentheses during translation to Push programs.
+
+## About the demo problems
+
+### `:simple-cubic`
+
+Here we're fitting a number of integer `x` values to the target function `f(x) = x^3 + x + 3`. That's not especially challenging, especially since the only numerical constant required is `3`. Think of it as a baseline.
+
+Here's an evolved solution:
+
+```
+(in1 string_swap boolean_dup in1 in1 integer_* integer_* integer_* string_drop in1 integer_+ "C" 1 string_dup boolean_or string_dup 1 "C" "C" "C" 1 string_concat true integer_+ integer_+ integer_+ integer_+ integer_+ integer_= integer_+)
+```
+
+### `:simple-quadratic`
+
+Here, we've moved to the slightly different function `f(x)= 7x^2 - 20x + 13`. You might imagine (somehow) that fitting a quadratic would be easier than the cubic in the prior example... but realize that GP is simultaneously searching for models _and_ constants parameters. So the task here is not merely to multiply some stuff together and add that, but also to build (from the constants in the system) the necessary numerical constants.
+
+So this turns out in practice to be a more difficult problem for GP to solve, under these conditions and the default search arguments. But eventually (quite a bit more slowly than the prior problem) one came up:
+
+```
+(integer_dup integer_+ integer_= 1 string_includes? "T" exec_if () (100 10) 1 string_includes? exec_if (string_length exec_dup (string_swap integer_dup integer_* "" "T" in1 integer_- boolean_not "T") integer_dup "G" integer_dup string_= exec_dup (integer_dup exec_if (false boolean_= string_= "" integer_+ in1 integer_+ string_swap exec_swap integer_swap string_= integer_swap) (exec_swap boolean_not string_concat "C" boolean_or integer_+ integer_+) string_concat boolean_swap string_length integer_+)) ())
+```
+
+### `:birthday-quadratic`
+
+This example problem probably feels a lot like the previous quadratic equation, and it is. But here, the task of fitting the data is further undermined by the necessity of constructing sufficiently large constant terms from small components. Running it, and watching the intermediate results as they unfold, one should have distinct sense of wanting to _reach in and help_ the struggling GP search process.
+
+There are several approaches one might take to "help". But all of them probably also have consequences (some counterintuitive) both for other aspects of search "behavior" in this problem, and for other problems if they were changes made across all problem examples. One may want to consider how problem-specific even "simple" algorithmic behavior can be....
+
+Here's an example of an evolved solution. Notice how much work it expends building constant values, and how roundabout it is; not at all "simplified", because the search has pushed it "closer" to using the given constants, and so it's done a number of algebraic tricks to simultaneously build the relations and constants.
+
+```
+("C" integer_swap boolean_= 1000 1 "G" in1 integer_- 10 string_length integer_- boolean_dup integer_- 10 integer_- exec_if (integer_+ boolean_or string_concat exec_dup (integer_dup in1 10 string_concat true boolean_and integer_* integer_- false in1) integer_* "C" integer_- integer_+ integer_+) ())
+```
+
+### `:random-regression`
+
+This problem has a few practical and pedagogic lessons to convey.
+
+First, it seems like it'd be remarkably _easy_ to pass a numerical function (even an integer-based one) through a paltry little set of a few points on the plane. You'd think—depending on your mathematics background, maybe—that it'd be a piece of cake. So it can play a useful role in helping us think about the tools we provide GP for the work we're asking it to do.
+
+Second, it's a practical example of writing a test problem in this system that uses a key-value lookup table as its function. This is particularly useful for learning about data-modeling applications, or poking at real datasets you might have on hand.
+
+### `:contains-T?`
+
+This is a remarkably simple problem for the system to solve, and indeed it's here mainly as a first step towards more complex ones. The task boils down to executing the Push `:string-contains?` instruction with the right arguments on hand.
+
+It's worth mentioning, though, that if you _disable_ the "`string-contains?`" function for a given run, it's still feasible (but much less straightforward) to solve the problem with the remaining toolkit.
+
+### `:contains-TA-or-AT?`
+
+The goal here is to return `true` when the argument string contains _either_ the substring "`TA`" or "`AT`". Now you or I would probably write code that checked for the presence of each, in turn, and then applied a boolean `or` to those intermediate results. But there's a more common solution that PushGP tends to find more quickly and easily: Concatenate the argument string and its reverse, and look for either "`AT`" or "`TA`" in that.
+
+So if the argument is "`AGATT`", we might concatenate that with its reverse (in some order; it's always contingent in each run!) to get "`AGATTTTAGA`", and then search for "`TA`" in that. Knowing "`TA`" is in the palindrome is enough to tell you that "`AT`" is too. So one of the two is in the original string.
+
+Here's an evolved solution that does a lot of extra faffing about.
+
+```
+(in1 exec_swap integer_swap in1 integer_- 1 1 1 string_reverse string_concat "A" string_take integer_% integer_dup 1000 integer_+ integer_swap "T" integer_swap boolean_= string_concat boolean_swap string_includes? string_reverse integer_+ integer_+ "G")
+```
+
+### `:contains-CC-or-AT?`
+
+This problem exists in contrast the the prior. There is a non-human-obvious "trick" to `:contains-TA-or-AT?` that doesn't seem to apply for this problem, and so it turns out to be somewhat more difficult to evolve solutions. That said, some do arise, for example:
+
+```
+(in1 "T" "C" "C" boolean_dup in1 "A" "T" string_concat integer_swap false string_includes? boolean_or boolean_or string_concat string_reverse string_swap 1 in1 integer_- string_reverse string_includes? string_reverse string_includes? string_includes? string_includes? string_includes? boolean_or boolean_or string_swap boolean_or boolean_= string_dup string_swap integer_dup)
+```

@@ -12,4 +12,5 @@ pom.xml.asc
 .gorilla-port
 .shadow-cljs
 .DS_Store
-.cpcache/*
+.cpcache/
+.rebel_readline_history
