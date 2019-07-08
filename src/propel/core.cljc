@@ -362,6 +362,21 @@
       (recur (update (interpret-one-step state) :step inc)))))
 
 
+(defn trace-program
+  "Runs the given problem starting with the stacks in start-state, recording the stacks in each step. Returns a potentially large vector of states."
+  [program start-state step-limit]
+  (loop [state (assoc start-state :exec program :step 0)
+         trace [state]]
+    (if (or (empty? (:exec state))
+            (> (:step state) step-limit))
+      trace
+      (let [next-step (interpret-one-step state)]
+        (recur
+          (update next-step :step inc)
+          (conj trace next-step)
+          )))))
+
+
 (defn push-from-plushy
   "Returns the Push program expressed by the given plushy representation."
   [plushy]
@@ -613,6 +628,7 @@
               step-limit)
     behavior-stack
     ))
+
 
 (defn behavior-vector
   "Produces an ordered collection of behavior values taken from the specified stack top, using the specified inputs"
