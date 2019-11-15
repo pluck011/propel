@@ -5,6 +5,7 @@
    :integer '()
    :string '()
    :boolean '()
+   :char '()
    :input {}})
 
 (defn empty-stack?

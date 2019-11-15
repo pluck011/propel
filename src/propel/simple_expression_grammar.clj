@@ -3,14 +3,15 @@
 
 (def expr-grammar-instructions
   [
-    'S->Num
-    'S->x
-    'S->Plus
-    'S->Minus
-    'S->Times
-    'S->Divide
-    'Num->0
-    'Num->1])
+   'S->Num
+   'S->x
+   'S->Plus
+   'S->Minus
+   'S->Times
+   'S->Divide
+   'Num->0
+   'Num->1
+   'close])
 
 (defn S->Num
   [state]

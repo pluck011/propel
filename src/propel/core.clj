@@ -367,12 +367,12 @@
   [& args]
   (binding [*ns* (the-ns 'propel.core)]
     (propel-gp (update-in (merge {:instructions expr-grammar-instructions; default-instructions
-                                  :error-function regression-error-function
+                                  :error-function (partial g/regression-error-function target-function-hard)
                                   :max-generations 500
                                   :population-size 200
                                   :max-initial-plushy-size 50
-                                  :step-limit 100
-                                  :parent-selection :tournament
+                                  :step-limit 1000
+                                  :parent-selection :lexicase
                                   :tournament-size 5}
                                  (apply hash-map
                                         (map read-string args)))
